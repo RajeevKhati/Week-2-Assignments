@@ -8,12 +8,12 @@
   The expected API endpoints are defined below,
   1.GET /todos - Retrieve all todo items
     Description: Returns a list of all todo items.
-    Response: 200 OK with an array of todo items in JSON format.
+    Response: 201 OK with an array of todo items in JSON format.
     Example: GET http://localhost:3000/todos
     
   2.GET /todos/:id - Retrieve a specific todo item by ID
     Description: Returns a specific todo item identified by its ID.
-    Response: 200 OK with the todo item in JSON format if found, or 404 Not Found if not found.
+    Response: 201 OK with the todo item in JSON format if found, or 404 Not Found if not found.
     Example: GET http://localhost:3000/todos/123
     
   3. POST /todos - Create a new todo item
@@ -26,24 +26,75 @@
   4. PUT /todos/:id - Update an existing todo item by ID
     Description: Updates an existing todo item identified by its ID.
     Request Body: JSON object representing the updated todo item.
-    Response: 200 OK if the todo item was found and updated, or 404 Not Found if not found.
+    Response: 201 OK if the todo item was found and updated, or 404 Not Found if not found.
     Example: PUT http://localhost:3000/todos/123
     Request Body: { "title": "Buy groceries", "completed": true }
     
   5. DELETE /todos/:id - Delete a todo item by ID
     Description: Deletes a todo item identified by its ID.
-    Response: 200 OK if the todo item was found and deleted, or 404 Not Found if not found.
+    Response: 201 OK if the todo item was found and deleted, or 404 Not Found if not found.
     Example: DELETE http://localhost:3000/todos/123
 
     - For any other route not defined in the server return 404
 
   Testing the server - run `npm run test-todoServer` command in terminal
  */
-const express = require('express');
-const bodyParser = require('body-parser');
+const express = require("express");
+const bodyParser = require("body-parser");
 
 const app = express();
 
 app.use(bodyParser.json());
+
+let id = 0;
+const todoList = [];
+
+app.get("/todos", (req, res) => {
+  res.status(200).json(todoList);
+});
+
+app.get("/todos/:id", (req, res) => {
+  const paramId = Number(req.params.id);
+  const todoItem = todoList.find((item) => item.id === paramId);
+  if (todoItem) {
+    res.status(200).json(todoItem);
+  } else {
+    res.status(404).send("404 Not Found");
+  }
+});
+
+app.post("/todos", (req, res) => {
+  const todoItem = req.body;
+  id++;
+  todoList.push({ id, ...todoItem });
+  res.status(201).json({ id });
+});
+
+app.put("/todos/:id", (req, res) => {
+  const todoItem = req.body;
+  const paramId = Number(req.params.id);
+  const todoItemIndex = todoList.findIndex((item) => item.id === paramId);
+  if (todoItemIndex === -1) {
+    res.status(404).send("404 Not Found");
+  } else {
+    todoList.splice(todoItemIndex, 1, { id: paramId, ...todoItem });
+    res.status(200).json(todoList);
+  }
+});
+
+app.delete("/todos/:id", (req, res) => {
+  const paramId = Number(req.params.id);
+  const todoItemIndex = todoList.findIndex((item) => item.id === paramId);
+  if (todoItemIndex === -1) {
+    res.status(404).send("404 Not Found");
+  } else {
+    todoList.splice(todoItemIndex, 1);
+    res.status(200).send("successfully deleted");
+  }
+});
+
+app.all("*", (_req, res) => {
+  res.status(404).send("404 Not Found");
+});
 
 module.exports = app;
